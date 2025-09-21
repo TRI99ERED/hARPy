@@ -22,7 +22,6 @@ HARPyAudioProcessor::HARPyAudioProcessor()
                        )
 #endif
 {
-    addParameter(speed = new juce::AudioParameterFloat("speed", "Arpeggiator Speed", 0.0, 1.0, 0.5));
 }
 
 HARPyAudioProcessor::~HARPyAudioProcessor()
@@ -95,6 +94,7 @@ void HARPyAudioProcessor::changeProgramName (int index, const juce::String& newN
 void HARPyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     notes.clear();
+    ArpeggiatorSettings settings = getArpeggiatorSettings(apvts);
     currentNote = 0;
     lastNoteValue = -1;
     time = 0;
@@ -146,13 +146,19 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         hostBPM = 120; // Default value
     }
 
+    auto settings = getArpeggiatorSettings(apvts);
+
+    auto rateCoefficient = std::powf(2.0f, settings.rate);
+
     // the audio buffer in a midi effect will have zero channels!
     jassert(buffer.getNumChannels() == 0);
     // however we use the buffer to get timing information
     auto numSamples = buffer.getNumSamples();
     // get note duration
-    //auto noteDuration = static_cast<int> (std::ceil(rate * 0.25f * (0.1f + (1.0f - (*speed)))));
-    int noteDuration = static_cast<int> (rate * 60.0f / float (hostBPM) * 0.25f);
+    const auto secondsInMinute = 60.0f;
+    const auto beatsInBar = 4.0f;
+    auto noteDuration = static_cast<int> (rate * secondsInMinute * beatsInBar / float (hostBPM) / rateCoefficient);
+
     for (const auto metadata : midiMessages)
     {
         const auto msg = metadata.getMessage();
@@ -173,9 +179,23 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         }
         if (notes.size() > 0)
         {
-            currentNote = (currentNote + 1) % notes.size();
+            switch (settings.order)
+            {
+            default:
+            case Up:
+                currentNote = (currentNote + 1) % notes.size();
+                break;
+            case Down:
+                currentNote = (currentNote + notes.size() - 1) % notes.size();
+                break;
+            case Random:
+                juce::Random r;
+                currentNote = r.nextInt(notes.size());
+            }
+            
             lastNoteValue = notes[currentNote];
-            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue, (juce::uint8)127), offset);
+            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue, (juce::uint8)127), offset); // NOTE: VELOCITY IS ALWAYS CONSTANT (127),
+                                                                                                          // TODO: Velocity controls per note position
         }
     }
     time = (time + numSamples) % noteDuration;
@@ -214,17 +234,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
     juce::StringArray rateChoices {
         "1/1",
         "1/2",
-        "1/2.",
         "1/4",
-        "1/4.",
         "1/8",
-        "1/8.",
         "1/16",
-        "1/16.",
         "1/32",
-        "1/32.",
         "1/64",
-        "1/64.",
     };
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Rate", "Rate", rateChoices, 0));
@@ -232,8 +246,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
     juce::StringArray orderChoices{
         "Up",
         "Down",
-        "Up/Down",
-        "Down/Up",
         "Random",
     };
 
@@ -247,4 +259,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new HARPyAudioProcessor();
+}
+
+ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& apvts)
+{
+    ArpeggiatorSettings settings;
+
+    settings.rate = apvts.getRawParameterValue("Rate")->load();
+    settings.order = ArpeggioOrder(int(apvts.getRawParameterValue("Order")->load()));
+
+    return settings;
 }

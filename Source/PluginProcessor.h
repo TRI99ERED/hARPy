@@ -10,6 +10,19 @@
 
 #include <JuceHeader.h>
 
+enum ArpeggioOrder {
+    Up,
+    Down,
+    Random,
+};
+
+struct ArpeggiatorSettings {
+    float rate{ 0 };
+    ArpeggioOrder order{ Up };
+};
+
+ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& apvts);
+
 //==============================================================================
 /**
 */
@@ -60,7 +73,6 @@ public:
 
 private:
     //==============================================================================
-    juce::AudioParameterFloat* speed;
     int currentNote, lastNoteValue;
     int time;
     float rate;
