@@ -56,6 +56,8 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout() };
 
+    int hostBPM;
+
 private:
     //==============================================================================
     juce::AudioParameterFloat* speed;

@@ -135,12 +135,24 @@ bool HARPyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 
 void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    auto tmp_bpm = getPlayHead()->getPosition()->getBpm();
+
+    // NOTE: When you're running standalone, you won't get a value here, as there is no host environment
+    if (tmp_bpm.hasValue()) {
+        // Set your module level variable to the retrieved value, for use elsewhere
+        hostBPM = (int)*tmp_bpm;
+    }
+    else {
+        hostBPM = 120; // Default value
+    }
+
     // the audio buffer in a midi effect will have zero channels!
     jassert(buffer.getNumChannels() == 0);
     // however we use the buffer to get timing information
     auto numSamples = buffer.getNumSamples();
     // get note duration
-    auto noteDuration = static_cast<int> (std::ceil(rate * 0.25f * (0.1f + (1.0f - (*speed)))));
+    //auto noteDuration = static_cast<int> (std::ceil(rate * 0.25f * (0.1f + (1.0f - (*speed)))));
+    int noteDuration = static_cast<int> (rate * 60.0f / float (hostBPM) * 0.25f);
     for (const auto metadata : midiMessages)
     {
         const auto msg = metadata.getMessage();
