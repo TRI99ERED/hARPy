@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="OQzBRl" name="hARPy" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" version="0.0.1"
+              companyName="TRI99ER" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
+              cppLanguageStandard="20">
   <MAINGROUP id="bzsD0p" name="hARPy">
     <GROUP id="{C983E975-5EFA-8A63-B22E-BFC78FE34D92}" name="Source">
       <FILE id="xTGRyF" name="PluginProcessor.cpp" compile="1" resource="0"
