@@ -15,6 +15,11 @@ HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+
+    for (auto* comp : getComps()) {
+        addAndMakeVisible(comp);
+    }
+
     setSize (400, 300);
 }
 
@@ -38,4 +43,20 @@ void HARPyAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+
+    auto bounds = getLocalBounds();
+
+    auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
+    auto orderArea = bounds;
+
+    rateSlider.setBounds(rateArea);
+    orderSlider.setBounds(orderArea);
+}
+
+std::vector<juce::Component*> HARPyAudioProcessorEditor::getComps()
+{
+    return {
+        &rateSlider,
+        &orderSlider,
+    };
 }
