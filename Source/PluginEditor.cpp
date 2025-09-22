@@ -11,7 +11,9 @@
 
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+    : AudioProcessorEditor (&p), audioProcessor (p),
+    rateSliderAttachment(audioProcessor.apvts, "Rate", rateSlider),
+    orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.

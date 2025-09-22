@@ -39,6 +39,11 @@ private:
 
     CustomRotarySlider rateSlider, orderSlider;
 
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using Attachment = APVTS::SliderAttachment;
+
+    Attachment rateSliderAttachment, orderSliderAttachment;
+
     std::vector<juce::Component*> getComps();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessorEditor)
