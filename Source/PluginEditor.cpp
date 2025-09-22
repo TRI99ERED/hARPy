@@ -57,6 +57,11 @@ void RotarySliderWithLabel::paint(juce::Graphics& g) {
 
     auto sliderBounds = getSliderBounds();
 
+    g.setColour(Colours::red);
+    g.drawRect(getLocalBounds());
+    g.setColour(Colours::yellow);
+    g.drawRect(sliderBounds);
+
     getLookAndFeel().drawRotarySlider(
         g,
         sliderBounds.getX(),
@@ -68,12 +73,21 @@ void RotarySliderWithLabel::paint(juce::Graphics& g) {
         endAng,
         *this
     );
-
-
 }
 
 juce::Rectangle<int> RotarySliderWithLabel::getSliderBounds() const {
-    return getLocalBounds();
+    auto bounds = getLocalBounds();
+
+    auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
+
+    size -= getTextHeight() * 2;
+
+    juce::Rectangle<int> r;
+    r.setSize(size, size);
+    r.setCentre(bounds.getCentreX(), 0);
+    r.setY(3);
+
+    return r;
 }
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
