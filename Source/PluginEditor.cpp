@@ -12,6 +12,8 @@
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
+    rateSlider(*audioProcessor.apvts.getParameter("Rate")),
+    orderSlider(*audioProcessor.apvts.getParameter("Order")),
     rateSliderAttachment(audioProcessor.apvts, "Rate", rateSlider),
     orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider)
 {
