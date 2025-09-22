@@ -72,10 +72,10 @@ void RotarySliderWithLabel::paint(juce::Graphics& g) {
 
     auto sliderBounds = getSliderBounds();
 
-    g.setColour(Colours::red);
+    /*g.setColour(Colours::red);
     g.drawRect(getLocalBounds());
     g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
+    g.drawRect(sliderBounds);*/
 
     getLookAndFeel().drawRotarySlider(
         g,
@@ -106,7 +106,9 @@ juce::Rectangle<int> RotarySliderWithLabel::getSliderBounds() const {
 }
 
 juce::String RotarySliderWithLabel::getDisplayString() const {
-    return juce::String(getValue());
+    if (auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param)) {
+        return choiceParam->getCurrentChoiceName();
+    }
 }
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
@@ -134,12 +136,23 @@ HARPyAudioProcessorEditor::~HARPyAudioProcessorEditor()
 void HARPyAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    
+    using namespace juce;
 
-    g.setColour (juce::Colours::white);
+    g.fillAll(Colours::black);
+
+    auto bounds = getLocalBounds();
+    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1);
+    auto h = titleArea.getHeight();
+
+    g.setColour(Colours::white);
+    g.setFont(h);
+    g.drawFittedText("hARPy v0.0.1", titleArea, Justification::centredLeft, 1);
+
+    /*g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (15.0f));
     juce::String bpm = juce::String(audioProcessor.hostBPM);
-    g.drawFittedText (bpm, getLocalBounds(), juce::Justification::centred, 1);
+    g.drawFittedText (bpm, getLocalBounds(), juce::Justification::centred, 1);*/
 }
 
 void HARPyAudioProcessorEditor::resized()
@@ -148,6 +161,8 @@ void HARPyAudioProcessorEditor::resized()
     // subcomponents in your editor..
 
     auto bounds = getLocalBounds();
+
+    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.25);
 
     auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
     auto orderArea = bounds;
