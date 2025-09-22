@@ -20,7 +20,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
     auto bounds = Rectangle<float>(x, y, width, height);
 
-    g.setColour(Colours::darkgrey);
+    g.setColour(Colours::dimgrey);
     g.fillEllipse(bounds);
 
     g.setColour(Colours::white);
@@ -65,6 +65,8 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 void RotarySliderWithLabel::paint(juce::Graphics& g) {
     using namespace juce;
 
+    g.fillAll(Colours::darkgrey);
+
     auto startAng = degreesToRadians(180.f + 45.f);
     auto endAng = degreesToRadians(180.f - 45.f) + MathConstants<float>::twoPi;
 
@@ -76,6 +78,10 @@ void RotarySliderWithLabel::paint(juce::Graphics& g) {
     g.drawRect(getLocalBounds());
     g.setColour(Colours::yellow);
     g.drawRect(sliderBounds);*/
+
+    g.setColour(Colours::white);
+    g.setFont(getTextHeight() * 2.f);
+    g.drawFittedText(title, getLocalBounds(), Justification::centredBottom, 1);
 
     getLookAndFeel().drawRotarySlider(
         g,
@@ -113,8 +119,8 @@ juce::String RotarySliderWithLabel::getDisplayString() const {
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
-    rateSlider(*audioProcessor.apvts.getParameter("Rate")),
-    orderSlider(*audioProcessor.apvts.getParameter("Order")),
+    rateSlider(*audioProcessor.apvts.getParameter("Rate"), "Rate"),
+    orderSlider(*audioProcessor.apvts.getParameter("Order"), "Order"),
     rateSliderAttachment(audioProcessor.apvts, "Rate", rateSlider),
     orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider)
 {

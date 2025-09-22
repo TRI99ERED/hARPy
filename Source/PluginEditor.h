@@ -21,9 +21,10 @@ struct LookAndFeel : juce::LookAndFeel_V4 {
 };
 
 struct RotarySliderWithLabel : juce::Slider {
-    RotarySliderWithLabel(juce::RangedAudioParameter& rap) :
+    RotarySliderWithLabel(juce::RangedAudioParameter& rap, const juce::String& t) :
         juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
-        param(&rap)
+        param(&rap),
+        title(t)
     {
         setLookAndFeel(&lnf);
     }
@@ -40,6 +41,7 @@ private:
     LookAndFeel lnf;
 
     juce::RangedAudioParameter* param;
+    juce::String title;
 };
 
 //==============================================================================
