@@ -20,31 +20,46 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
     auto bounds = Rectangle<float>(x, y, width, height);
 
-    g.setColour(Colour(64u, 64u, 64u));
+    g.setColour(Colours::darkgrey);
     g.fillEllipse(bounds);
 
-    g.setColour(Colour(255u, 255u, 255u));
+    g.setColour(Colours::white);
     g.drawEllipse(bounds, 1.f);
 
-    auto center = bounds.getCentre();
+    if (auto* rswl = dynamic_cast<RotarySliderWithLabel*>(&slider)) {
+        auto center = bounds.getCentre();
 
-    Path p;
+        Path p;
 
-    Rectangle<float> r;
-    r.setLeft(center.getX() - 3);
-    r.setRight(center.getX() + 3);
-    r.setTop(bounds.getY());
-    r.setBottom(center.getY());
+        Rectangle<float> r;
+        r.setLeft(center.getX() - 3);
+        r.setRight(center.getX() + 3);
+        r.setTop(bounds.getY());
+        r.setBottom(center.getY() - rswl->getTextHeight() * 1.5f);
 
-    p.addRectangle(r);
+        p.addRoundedRectangle(r, 3.f);
 
-    jassert(rotaryStartAngle < rotaryEndAngle);
+        jassert(rotaryStartAngle < rotaryEndAngle);
 
-    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
 
-    p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+        p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
 
-    g.fillPath(p);
+        g.fillPath(p);
+
+        g.setFont(rswl->getTextHeight());
+        auto text = rswl->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
+
+        r.setSize(strWidth + 3, rswl->getTextHeight() + 3);
+        r.setCentre(bounds.getCentre());
+
+        g.setColour(Colours::black);
+        g.fillRect(r);
+
+        g.setColour(Colours::white);
+        g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
+    }
 }
 //==============================================================================
 void RotarySliderWithLabel::paint(juce::Graphics& g) {
@@ -88,6 +103,10 @@ juce::Rectangle<int> RotarySliderWithLabel::getSliderBounds() const {
     r.setY(3);
 
     return r;
+}
+
+juce::String RotarySliderWithLabel::getDisplayString() const {
+    return juce::String(getValue());
 }
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
