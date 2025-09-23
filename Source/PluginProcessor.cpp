@@ -206,9 +206,25 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             case Down:
                 currentNote = (currentNote + notes.size() - 1) % notes.size();
                 break;
+            case UpDown:
+                if (isUp) {
+                    currentNote = (currentNote + 1) % notes.size();
+                }
+                else {
+                    currentNote = (currentNote + notes.size() - 1) % notes.size();
+                }
+
+                if ((currentNote == notes.size() - 1) && isUp) {
+                    isUp = false;
+                }
+                else if ((currentNote == 0) && !isUp) {
+                    isUp = true;
+                }
+                break;
             case Random:
                 juce::Random rng;
                 currentNote = rng.nextInt(notes.size());
+                break;
             }
 
             lastNoteValue = notes[currentNote];
@@ -273,6 +289,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
     juce::StringArray orderChoices{
         "Up",
         "Down",
+        "Up & Down",
         "Random",
     };
 

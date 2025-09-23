@@ -13,6 +13,7 @@
 enum ArpeggioOrder {
     Up,
     Down,
+    UpDown,
     Random,
 };
 
@@ -80,6 +81,7 @@ private:
     int time;
     float rate;
     juce::SortedSet<std::pair<int, juce::uint8>> notes;
+    bool isUp = true;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessor)
 };

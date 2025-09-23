@@ -156,12 +156,12 @@ void HARPyAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll(Colours::black);
 
     auto bounds = getLocalBounds();
-    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1f);
+    auto titleArea = bounds.removeFromBottom(bounds.getHeight() * 0.1f);
     auto h = titleArea.getHeight();
 
     g.setColour(Colours::white);
     g.setFont(h);
-    g.drawFittedText("hARPy v0.0.1", titleArea, Justification::centredLeft, 1);
+    g.drawFittedText("hARPy v0.0.1 by tri99er", titleArea, Justification::centredLeft, 1);
 
     /*g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (15.0f));
@@ -176,7 +176,7 @@ void HARPyAudioProcessorEditor::resized()
 
     auto bounds = getLocalBounds();
 
-    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1f);
+    auto titleArea = bounds.removeFromBottom(bounds.getHeight() * 0.1f);
 
     auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.25f);
     bounds.removeFromLeft(1);
