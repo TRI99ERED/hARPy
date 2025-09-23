@@ -169,7 +169,8 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         beatLength = float(ts->denominator);
     }
 
-    auto noteDuration = static_cast<int> (rate * secondsInMinute * magicFactor * beatsInBar / beatLength / float (hostBPM) / rateCoefficient);
+    auto noteDuration = static_cast<int> (rate * secondsInMinute * magicFactor * beatsInBar
+        / beatLength / float(hostBPM) / rateCoefficient);
 
     for (const auto metadata : midiMessages)
     {
@@ -183,14 +184,17 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     }
     midiMessages.clear();
 
-    if ((time + numSamples) >= noteDuration)
+    if ((time + numSamples) >= int(noteDuration * settings.noteLength))
     {
-        auto offset = juce::jmax(0, juce::jmin((int)(noteDuration - time), numSamples - 1));
+        auto offset = juce::jmax(0, juce::jmin(int(int(noteDuration * settings.noteLength) - time), numSamples - 1));
         if (lastNoteValue.first > 0)
         {
             midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
             lastNoteValue = std::make_pair(-1, juce::uint8(0));
         }
+    }
+    if ((time + numSamples) >= noteDuration) {
+        auto offset = juce::jmax(0, juce::jmin(int(noteDuration - time), numSamples - 1));
         if (notes.size() > 0)
         {
             switch (settings.order)
@@ -206,7 +210,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 juce::Random rng;
                 currentNote = rng.nextInt(notes.size());
             }
-            
+
             lastNoteValue = notes[currentNote];
 
             juce::uint8 finalVel = juce::uint8(float(lastNoteValue.second) * settings.velFineCtrl);
@@ -274,7 +278,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Order", "Order", orderChoices, 0));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.0f, 1.0f, 1.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.f, 1.f, 1.f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.f, 1.f, 1.f));
 
     return layout;
 }
@@ -293,6 +299,7 @@ ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& a
     settings.rate = apvts.getRawParameterValue("Rate")->load();
     settings.order = ArpeggioOrder(int(apvts.getRawParameterValue("Order")->load()));
     settings.velFineCtrl = apvts.getRawParameterValue("Velocity Fine Control")->load();
+    settings.noteLength = apvts.getRawParameterValue("Note Length")->load();
 
     return settings;
 }

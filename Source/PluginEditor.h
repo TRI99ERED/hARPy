@@ -62,12 +62,12 @@ private:
     // access the processor object that created it.
     HARPyAudioProcessor& audioProcessor;
 
-    RotarySliderWithLabel rateSlider, orderSlider, velFineCtrlSlider;
+    RotarySliderWithLabel rateSlider, orderSlider, velFineCtrlSlider, noteLenSlider;
 
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
 
-    Attachment rateSliderAttachment, orderSliderAttachment, velFineCtrlSliderAttachment;
+    Attachment rateSliderAttachment, orderSliderAttachment, velFineCtrlSliderAttachment, noteLenSliderAttachment;
 
     std::vector<juce::Component*> getComps();
 
