@@ -148,7 +148,7 @@ void HARPyAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll(Colours::black);
 
     auto bounds = getLocalBounds();
-    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1);
+    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1f);
     auto h = titleArea.getHeight();
 
     g.setColour(Colours::white);
@@ -168,7 +168,7 @@ void HARPyAudioProcessorEditor::resized()
 
     auto bounds = getLocalBounds();
 
-    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.25);
+    auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1f);
 
     auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
     auto orderArea = bounds;
