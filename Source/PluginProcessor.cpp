@@ -135,12 +135,12 @@ bool HARPyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 
 void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    auto tmp_bpm = getPlayHead()->getPosition()->getBpm();
+    auto tmpBPM = getPlayHead()->getPosition()->getBpm();
 
     // NOTE: When you're running standalone, you won't get a value here, as there is no host environment
-    if (tmp_bpm.hasValue()) {
+    if (tmpBPM.hasValue()) {
         // Set your module level variable to the retrieved value, for use elsewhere
-        hostBPM = (int)*tmp_bpm;
+        hostBPM = (int)*tmpBPM;
     }
     else {
         hostBPM = 120; // Default value
@@ -156,8 +156,20 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     auto numSamples = buffer.getNumSamples();
     // get note duration
     const auto secondsInMinute = 60.0f;
-    const auto beatsInBar = 4.0f;
-    auto noteDuration = static_cast<int> (rate * secondsInMinute * beatsInBar / float (hostBPM) / rateCoefficient);
+
+    // Seriously can't figure what this is, but it works
+    const auto magicFactor = 4.0f;
+
+    auto ts = getPlayHead()->getPosition()->getTimeSignature();
+
+    auto beatsInBar = 4.0f;
+    auto beatLength = 4.0f;
+    if (ts.hasValue()) {
+        beatsInBar = float(ts->numerator);
+        beatLength = float(ts->denominator);
+    }
+
+    auto noteDuration = static_cast<int> (rate * secondsInMinute * magicFactor * beatsInBar / beatLength / float (hostBPM) / rateCoefficient);
 
     for (const auto metadata : midiMessages)
     {
@@ -210,7 +222,6 @@ bool HARPyAudioProcessor::hasEditor() const
 juce::AudioProcessorEditor* HARPyAudioProcessor::createEditor()
 {
     return new HARPyAudioProcessorEditor (*this);
-    //return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================

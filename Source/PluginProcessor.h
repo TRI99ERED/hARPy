@@ -69,7 +69,7 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout() };
 
-    int hostBPM;
+    int hostBPM = 120;
 
 private:
     //==============================================================================
