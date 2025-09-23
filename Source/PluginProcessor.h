@@ -73,10 +73,11 @@ public:
 
 private:
     //==============================================================================
-    int currentNote, lastNoteValue;
+    int currentNote;
+    std::pair<int, juce::uint8> lastNoteValue;
     int time;
     float rate;
-    juce::SortedSet<int> notes;
+    juce::SortedSet<std::pair<int, juce::uint8>> notes;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessor)
 };

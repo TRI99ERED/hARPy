@@ -96,7 +96,7 @@ void HARPyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     notes.clear();
     ArpeggiatorSettings settings = getArpeggiatorSettings(apvts);
     currentNote = 0;
-    lastNoteValue = -1;
+    lastNoteValue = std::make_pair(-1, juce::uint8(0));
     time = 0;
     rate = static_cast<float> (sampleRate);
 }
@@ -175,19 +175,19 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     {
         const auto msg = metadata.getMessage();
         if (msg.isNoteOn())
-            notes.add(msg.getNoteNumber());
+            notes.add(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
         else if (msg.isNoteOff())
-            notes.removeValue(msg.getNoteNumber());
+            notes.removeValue(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
     }
     midiMessages.clear();
 
     if ((time + numSamples) >= noteDuration)
     {
         auto offset = juce::jmax(0, juce::jmin((int)(noteDuration - time), numSamples - 1));
-        if (lastNoteValue > 0)
+        if (lastNoteValue.first > 0)
         {
-            midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue), offset);
-            lastNoteValue = -1;
+            midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
+            lastNoteValue = std::make_pair(-1, juce::uint8(0));
         }
         if (notes.size() > 0)
         {
@@ -206,8 +206,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             }
             
             lastNoteValue = notes[currentNote];
-            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue, (juce::uint8)127), offset); // NOTE: VELOCITY IS ALWAYS CONSTANT (127),
-                                                                                                          // TODO: Velocity controls per note position
+            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue.first, lastNoteValue.second), offset);
         }
     }
     time = (time + numSamples) % noteDuration;
