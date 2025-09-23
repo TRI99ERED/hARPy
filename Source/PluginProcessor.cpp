@@ -177,7 +177,9 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         if (msg.isNoteOn())
             notes.add(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
         else if (msg.isNoteOff())
-            notes.removeValue(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
+            for (juce::uint8 i = 0; i <= 127; ++i) {
+                notes.removeValue(std::make_pair(msg.getNoteNumber(), i));
+            }
     }
     midiMessages.clear();
 
