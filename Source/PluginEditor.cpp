@@ -115,14 +115,20 @@ juce::String RotarySliderWithLabel::getDisplayString() const {
     if (auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param)) {
         return choiceParam->getCurrentChoiceName();
     }
+
+    if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param)) {
+        return juce::String(getValue() * 100.f, 0) + "%";
+    }
 }
 //==============================================================================
 HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
     rateSlider(*audioProcessor.apvts.getParameter("Rate"), "Rate"),
     orderSlider(*audioProcessor.apvts.getParameter("Order"), "Order"),
+    velFineCtrlSlider(*audioProcessor.apvts.getParameter("Velocity Fine Control"), "Velocity"),
     rateSliderAttachment(audioProcessor.apvts, "Rate", rateSlider),
-    orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider)
+    orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider),
+    velFineCtrlSliderAttachment(audioProcessor.apvts, "Velocity Fine Control", velFineCtrlSlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -131,7 +137,7 @@ HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
         addAndMakeVisible(comp);
     }
 
-    setSize (400, 300);
+    setSize (600, 200);
 }
 
 HARPyAudioProcessorEditor::~HARPyAudioProcessorEditor()
@@ -170,11 +176,15 @@ void HARPyAudioProcessorEditor::resized()
 
     auto titleArea = bounds.removeFromTop(bounds.getHeight() * 0.1f);
 
-    auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
-    auto orderArea = bounds;
+    auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.33f);
+    bounds.removeFromLeft(1);
+    auto orderArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
+    bounds.removeFromLeft(1);
+    auto velFineCtrlArea = bounds;
 
     rateSlider.setBounds(rateArea);
     orderSlider.setBounds(orderArea);
+    velFineCtrlSlider.setBounds(velFineCtrlArea);
 }
 
 std::vector<juce::Component*> HARPyAudioProcessorEditor::getComps()
@@ -182,5 +192,6 @@ std::vector<juce::Component*> HARPyAudioProcessorEditor::getComps()
     return {
         &rateSlider,
         &orderSlider,
+        &velFineCtrlSlider,
     };
 }

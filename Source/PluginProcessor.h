@@ -19,6 +19,7 @@ enum ArpeggioOrder {
 struct ArpeggiatorSettings {
     float rate{ 0 };
     ArpeggioOrder order{ Up };
+    float velFineCtrl{ 1 };
 };
 
 ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& apvts);
