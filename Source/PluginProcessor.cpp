@@ -396,9 +396,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Order", "Order", orderChoices, 0));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.f, 1.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.01f, 1.f, 1.f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.f, 2.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.01f, 2.f, 1.f));
 
     layout.add(std::make_unique<juce::AudioParameterInt>("Repeats", "Repeats", 0, 16, 0));
 
