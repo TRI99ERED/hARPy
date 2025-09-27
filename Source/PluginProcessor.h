@@ -22,6 +22,7 @@ struct ArpeggiatorSettings {
     ArpeggioOrder order{ Up };
     float velFineCtrl{ 1.f };
     float noteLength{ 1.f };
+    int repeats{ 0 };
 };
 
 ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -72,6 +73,8 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout() };
 
+    int absoluteArpeggioLength();
+
     int hostBPM = 120;
 
 private:
@@ -80,8 +83,10 @@ private:
     std::pair<int, juce::uint8> lastNoteValue;
     int time;
     float rate;
-    juce::SortedSet<std::pair<int, juce::uint8>> notes;
+    juce::SortedSet<std::pair<int, juce::uint8>> noteVels;
     bool isUp = true;
+    int absArpPos = 0;
+    int repeat = 0;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessor)
 };

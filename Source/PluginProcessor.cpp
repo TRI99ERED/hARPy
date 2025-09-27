@@ -93,12 +93,14 @@ void HARPyAudioProcessor::changeProgramName (int index, const juce::String& newN
 //==============================================================================
 void HARPyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    notes.clear();
-    ArpeggiatorSettings settings = getArpeggiatorSettings(apvts);
+    noteVels.clear();
     currentNote = 0;
     lastNoteValue = std::make_pair(-1, juce::uint8(0));
     time = 0;
     rate = static_cast<float> (sampleRate);
+    isUp = true;
+    absArpPos = 0;
+    repeat = 0;
 }
 
 void HARPyAudioProcessor::releaseResources()
@@ -176,69 +178,86 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     {
         const auto msg = metadata.getMessage();
         if (msg.isNoteOn())
-            notes.add(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
+            noteVels.add(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
         else if (msg.isNoteOff())
             for (juce::uint8 i = 0; i <= 127; ++i) {
-                notes.removeValue(std::make_pair(msg.getNoteNumber(), i));
+                noteVels.removeValue(std::make_pair(msg.getNoteNumber(), i));
+
+                if (noteVels.size() == 0) {
+                    lastNoteValue = std::make_pair(-1, juce::uint8(0));
+                    time = 0;
+                    isUp = true;
+                    absArpPos = 0;
+                    repeat = 0;
+                }
             }
     }
     midiMessages.clear();
 
-    if ((time + numSamples) >= int(noteDuration * settings.noteLength))
-    {
-        auto offset = juce::jmax(0, juce::jmin(int(int(noteDuration * settings.noteLength) - time), numSamples - 1));
-        if (lastNoteValue.first > 0)
-        {
-            midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
-            lastNoteValue = std::make_pair(-1, juce::uint8(0));
-        }
+    if ((settings.repeats > 0) && (repeat >= settings.repeats)) {
+        return;
     }
-    if ((time + numSamples) >= noteDuration) {
-        auto offset = juce::jmax(0, juce::jmin(int(noteDuration - time), numSamples - 1));
-        if (notes.size() > 0)
-        {
-            switch (settings.order)
-            {
-            default:
-            case Up:
-                currentNote = (currentNote + 1) % notes.size();
-                break;
-            case Down:
-                currentNote = (currentNote + notes.size() - 1) % notes.size();
-                break;
-            case UpDown:
-                if (isUp) {
-                    currentNote = (currentNote + 1) % notes.size();
-                }
-                else {
-                    currentNote = (currentNote + notes.size() - 1) % notes.size();
-                }
 
-                if ((currentNote == notes.size() - 1) && isUp) {
-                    isUp = false;
-                }
-                else if ((currentNote == 0) && !isUp) {
-                    isUp = true;
-                }
-                break;
-            case Random:
-                juce::Random rng;
-                auto tmp = rng.nextInt(notes.size());
-                if (currentNote != tmp) {
-                    currentNote = tmp;
-                }
-                else {
-                    currentNote = rng.nextBool()
-                        ? rng.nextInt(juce::Range<int>(0, currentNote - 1))
-                        : rng.nextInt(juce::Range<int>(currentNote, notes.size() - 1));
-                }
-                break;
+    if ((time + numSamples) >= int(noteDuration * settings.noteLength) && (lastNoteValue.first > 0)) {
+        auto offset = juce::jmax(0, juce::jmin(int(int(noteDuration * settings.noteLength) - time), numSamples - 1));
+        midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
+        lastNoteValue = std::make_pair(-1, juce::uint8(0));
+    }
+    if ((time + numSamples) >= noteDuration && noteVels.size() > 0) {
+        auto offset = juce::jmax(0, juce::jmin(int(noteDuration - time), numSamples - 1));
+
+        switch (settings.order)
+        {
+        default:
+        case Up:
+            currentNote = absArpPos;
+            break;
+        case Down:
+            currentNote = absoluteArpeggioLength() - 1 - absArpPos;
+            break;
+        case UpDown:
+            if (isUp) {
+                currentNote = absArpPos;
+            }
+            else {
+                currentNote = absoluteArpeggioLength() - 1 - absArpPos;
             }
 
-            lastNoteValue = notes[currentNote];
+            if ((currentNote == noteVels.size() - 1) && isUp) {
+                isUp = false;
+            }
+            else if ((currentNote == 0) && !isUp) {
+                isUp = true;
+            }
+            break;
+        case Random:
+            juce::Random rng;
+            auto tmp = rng.nextInt(noteVels.size());
+            if (currentNote != tmp) {
+                currentNote = tmp;
+            }
+            else {
+                currentNote = (currentNote == noteVels.size() - 1)
+                    ? currentNote - 1
+                    : currentNote + 1;
+            }
+            break;
+        }
 
-            juce::uint8 finalVel = juce::uint8(float(lastNoteValue.second) * settings.velFineCtrl);
-            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue.first, finalVel), offset);
+        lastNoteValue = noteVels[currentNote];
+
+        juce::uint8 finalVel = juce::uint8(float(lastNoteValue.second) * settings.velFineCtrl);
+        midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue.first, finalVel), offset);
+
+        auto absArpLen = absoluteArpeggioLength();
+
+        ++absArpPos;
+        if (absArpPos >= absArpLen) {
+            absArpPos = 0;
+        }
+
+        if (settings.repeats > 0 && absArpPos == 0) {
+            ++repeat;
         }
     }
     time = (time + numSamples) % noteDuration;
@@ -307,7 +326,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.f, 1.f, 1.f));
 
+    layout.add(std::make_unique<juce::AudioParameterInt>("Repeats", "Repeats", 0, 16, 0));
+
     return layout;
+}
+
+int HARPyAudioProcessor::absoluteArpeggioLength()
+{
+    auto settings = getArpeggiatorSettings(apvts);
+    switch (ArpeggioOrder(settings.order))
+    {
+    default:
+    case Up:
+    case Down:
+    case Random:
+        return noteVels.size();
+        break;
+    case UpDown:
+        return (noteVels.size() * 2) - 1;
+    }
 }
 
 //==============================================================================
@@ -325,6 +362,7 @@ ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& a
     settings.order = ArpeggioOrder(int(apvts.getRawParameterValue("Order")->load()));
     settings.velFineCtrl = apvts.getRawParameterValue("Velocity Fine Control")->load();
     settings.noteLength = apvts.getRawParameterValue("Note Length")->load();
+    settings.repeats = apvts.getRawParameterValue("Repeats")->load();
 
     return settings;
 }
