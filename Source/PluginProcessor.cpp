@@ -216,18 +216,16 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             currentNote = absoluteArpeggioLength() - 1 - absArpPos;
             break;
         case UpDown:
-            if (isUp) {
+            if (noteVels.size() <= 1) {
+                currentNote = 0;
+                break;
+            }
+
+            if (absArpPos < noteVels.size()) {
                 currentNote = absArpPos;
             }
             else {
-                currentNote = absoluteArpeggioLength() - 1 - absArpPos;
-            }
-
-            if ((currentNote == noteVels.size() - 1) && isUp) {
-                isUp = false;
-            }
-            else if ((currentNote == 0) && !isUp) {
-                isUp = true;
+                currentNote = absoluteArpeggioLength() - absArpPos;
             }
             break;
         case Random:
@@ -343,7 +341,7 @@ int HARPyAudioProcessor::absoluteArpeggioLength()
         return noteVels.size();
         break;
     case UpDown:
-        return (noteVels.size() * 2) - 1;
+        return (noteVels.size() * 2) - 2;
     }
 }
 

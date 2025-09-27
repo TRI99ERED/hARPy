@@ -52,7 +52,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
         auto strWidth = g.getCurrentFont().getStringWidth(text);
 
         r.setSize(strWidth + 3, rswl->getTextHeight() + 3);
-        r.setCentre(bounds.getCentre());
+        r.setCentre(bounds.getCentreX(), bounds.getY() + bounds.getHeight() + rswl->getTextHeight());
 
         g.setColour(Colours::black);
         g.fillRect(r);
@@ -168,7 +168,7 @@ void HARPyAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour(Colours::white);
     g.setFont(h);
-    g.drawFittedText("hARPy v0.0.1 by tri99er", titleArea, Justification::centredLeft, 1);
+    g.drawFittedText("hARPy v0.0.2 by tri99er", titleArea, Justification::centredLeft, 1);
 
     /*g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (15.0f));
