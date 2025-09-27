@@ -15,6 +15,8 @@ enum ArpeggioOrder {
     Down,
     UpDown,
     DownUp,
+    UpAndDown,
+    DownAndUp,
     Random,
     ChordRepeat,
 };
@@ -86,7 +88,6 @@ private:
     int time;
     float rate;
     juce::SortedSet<std::pair<int, juce::uint8>> noteVels;
-    bool isUp = true;
     int absArpPos = 0;
     int repeat = 0;
     //==============================================================================

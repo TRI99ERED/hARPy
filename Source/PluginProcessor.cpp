@@ -98,7 +98,6 @@ void HARPyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     lastNoteValue = std::make_pair(-1, juce::uint8(0));
     time = 0;
     rate = static_cast<float> (sampleRate);
-    isUp = true;
     absArpPos = 0;
     repeat = 0;
 }
@@ -186,7 +185,6 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 if (noteVels.size() == 0) {
                     lastNoteValue = std::make_pair(-1, juce::uint8(0));
                     time = 0;
-                    isUp = true;
                     absArpPos = 0;
                     repeat = 0;
                 }
@@ -229,6 +227,8 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         case Down:
         case UpDown:
         case DownUp:
+        case UpAndDown:
+        case DownAndUp:
             switch (settings.order)
             {
             default:
@@ -262,6 +262,32 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 }
                 else {
                     currentNote = absArpPos - noteVels.size() + 1;
+                }
+                break;
+            case UpAndDown:
+                if (noteVels.size() <= 1) {
+                    currentNote = 0;
+                    break;
+                }
+
+                if (absArpPos < noteVels.size()) {
+                    currentNote = absArpPos;
+                }
+                else {
+                    currentNote = absoluteArpeggioLength() - 1 - absArpPos;
+                }
+                break;
+            case DownAndUp:
+                if (noteVels.size() <= 1) {
+                    currentNote = 0;
+                    break;
+                }
+
+                if (absArpPos < noteVels.size()) {
+                    currentNote = noteVels.size() - 1 - absArpPos;
+                }
+                else {
+                    currentNote = absArpPos - noteVels.size();
                 }
                 break;
             case Random:
@@ -362,6 +388,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
         "Down",
         "Up/Down",
         "Down/Up",
+        "Up & Down",
+        "Down & Up",
         "Random",
         "Chord Repeat"
     };
@@ -370,7 +398,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.f, 1.f, 1.f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.f, 1.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.f, 2.f, 1.f));
 
     layout.add(std::make_unique<juce::AudioParameterInt>("Repeats", "Repeats", 0, 16, 0));
 
@@ -391,6 +419,11 @@ int HARPyAudioProcessor::absoluteArpeggioLength()
     case UpDown:
     case DownUp:
         return (noteVels.size() * 2) - 2;
+    case UpAndDown:
+    case DownAndUp:
+        return (noteVels.size() * 2);
+    case ChordRepeat:
+        return 1;
     }
 }
 
