@@ -156,7 +156,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     jassert(buffer.getNumChannels() == 0);
     // however we use the buffer to get timing information
     auto numSamples = buffer.getNumSamples();
-    // get note duration
+    // get noteVel duration
     const auto secondsInMinute = 60.0f;
 
     // Seriously can't figure what this is, but it works
@@ -200,63 +200,109 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     if ((time + numSamples) >= int(noteDuration * settings.noteLength) && (lastNoteValue.first > 0)) {
         auto offset = juce::jmax(0, juce::jmin(int(int(noteDuration * settings.noteLength) - time), numSamples - 1));
-        midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
-        lastNoteValue = std::make_pair(-1, juce::uint8(0));
+        switch (settings.order) {
+        default:
+        case Up:
+        case Down:
+        case UpDown:
+        case DownUp:
+            
+            midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
+            lastNoteValue = std::make_pair(-1, juce::uint8(0));
+            break;
+        case ChordRepeat:
+            for (auto& noteVel : noteVels) {
+                midiMessages.addEvent(juce::MidiMessage::noteOff(1, noteVel.first), offset);
+            }
+            break;
+        }
     }
     if ((time + numSamples) >= noteDuration && noteVels.size() > 0) {
         auto offset = juce::jmax(0, juce::jmin(int(noteDuration - time), numSamples - 1));
 
-        switch (settings.order)
-        {
+        auto absArpLen = absoluteArpeggioLength();
+        juce::uint8 finalVel = 0;
+
+        switch (settings.order) {
         default:
         case Up:
-            currentNote = absArpPos;
-            break;
         case Down:
-            currentNote = absoluteArpeggioLength() - 1 - absArpPos;
-            break;
         case UpDown:
-            if (noteVels.size() <= 1) {
-                currentNote = 0;
+        case DownUp:
+            switch (settings.order)
+            {
+            default:
+            case Up:
+                currentNote = absArpPos;
+                break;
+            case Down:
+                currentNote = absoluteArpeggioLength() - 1 - absArpPos;
+                break;
+            case UpDown:
+                if (noteVels.size() <= 1) {
+                    currentNote = 0;
+                    break;
+                }
+
+                if (absArpPos < noteVels.size()) {
+                    currentNote = absArpPos;
+                }
+                else {
+                    currentNote = absoluteArpeggioLength() - absArpPos;
+                }
+                break;
+            case DownUp:
+                if (noteVels.size() <= 1) {
+                    currentNote = 0;
+                    break;
+                }
+
+                if (absArpPos < noteVels.size()) {
+                    currentNote = noteVels.size() - 1 - absArpPos;
+                }
+                else {
+                    currentNote = absArpPos - noteVels.size() + 1;
+                }
+                break;
+            case Random:
+                juce::Random rng;
+                auto tmp = rng.nextInt(noteVels.size());
+                if (currentNote != tmp) {
+                    currentNote = tmp;
+                }
+                else {
+                    currentNote = (currentNote == noteVels.size() - 1)
+                        ? currentNote - 1
+                        : currentNote + 1;
+                }
                 break;
             }
 
-            if (absArpPos < noteVels.size()) {
-                currentNote = absArpPos;
+            lastNoteValue = noteVels[currentNote];
+
+            finalVel = juce::uint8(float(lastNoteValue.second) * settings.velFineCtrl);
+            midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue.first, finalVel), offset);
+
+            ++absArpPos;
+            if (absArpPos >= absArpLen) {
+                absArpPos = 0;
             }
-            else {
-                currentNote = absoluteArpeggioLength() - absArpPos;
-            }
-            break;
-        case Random:
-            juce::Random rng;
-            auto tmp = rng.nextInt(noteVels.size());
-            if (currentNote != tmp) {
-                currentNote = tmp;
-            }
-            else {
-                currentNote = (currentNote == noteVels.size() - 1)
-                    ? currentNote - 1
-                    : currentNote + 1;
+
+            if (settings.repeats > 0 && absArpPos == 0) {
+                ++repeat;
             }
             break;
+        case ChordRepeat:
+            for (auto& noteVel : noteVels) {
+                juce::uint8 finalVel = juce::uint8(float(noteVel.second) * settings.velFineCtrl);
+                midiMessages.addEvent(juce::MidiMessage::noteOn(1, noteVel.first, finalVel), offset);
+            }
+            if (settings.repeats > 0) {
+                ++repeat;
+            }
+            break;
         }
-
-        lastNoteValue = noteVels[currentNote];
-
-        juce::uint8 finalVel = juce::uint8(float(lastNoteValue.second) * settings.velFineCtrl);
-        midiMessages.addEvent(juce::MidiMessage::noteOn(1, lastNoteValue.first, finalVel), offset);
-
-        auto absArpLen = absoluteArpeggioLength();
-
-        ++absArpPos;
-        if (absArpPos >= absArpLen) {
-            absArpPos = 0;
-        }
-
-        if (settings.repeats > 0 && absArpPos == 0) {
-            ++repeat;
-        }
+        
     }
     time = (time + numSamples) % noteDuration;
 }
@@ -314,8 +360,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
     juce::StringArray orderChoices{
         "Up",
         "Down",
-        "Up & Down",
+        "Up/Down",
+        "Down/Up",
         "Random",
+        "Chord Repeat"
     };
 
     layout.add(std::make_unique<juce::AudioParameterChoice>("Order", "Order", orderChoices, 0));
@@ -341,6 +389,7 @@ int HARPyAudioProcessor::absoluteArpeggioLength()
         return noteVels.size();
         break;
     case UpDown:
+    case DownUp:
         return (noteVels.size() * 2) - 2;
     }
 }

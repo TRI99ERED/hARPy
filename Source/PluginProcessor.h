@@ -14,7 +14,9 @@ enum ArpeggioOrder {
     Up,
     Down,
     UpDown,
+    DownUp,
     Random,
+    ChordRepeat,
 };
 
 struct ArpeggiatorSettings {
