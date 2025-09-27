@@ -223,7 +223,15 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 break;
             case Random:
                 juce::Random rng;
-                currentNote = rng.nextInt(notes.size());
+                auto tmp = rng.nextInt(notes.size());
+                if (currentNote != tmp) {
+                    currentNote = tmp;
+                }
+                else {
+                    currentNote = rng.nextBool()
+                        ? rng.nextInt(juce::Range<int>(0, currentNote - 1))
+                        : rng.nextInt(juce::Range<int>(currentNote, notes.size() - 1));
+                }
                 break;
             }
 
