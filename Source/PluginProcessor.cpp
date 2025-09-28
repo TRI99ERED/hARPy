@@ -181,22 +181,21 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         else if (msg.isNoteOff())
             for (juce::uint8 i = 0; i <= 127; ++i) {
                 noteVels.removeValue(std::make_pair(msg.getNoteNumber(), i));
-
-                if (noteVels.size() == 0) {
-                    lastNoteValue = std::make_pair(-1, juce::uint8(0));
-                    time = 0;
-                    absArpPos = 0;
-                    repeat = 0;
-                }
             }
     }
     midiMessages.clear();
+
+    if (noteVels.size() == 0) {
+        absArpPos = 0;
+        repeat = 0;
+    }
 
     if ((settings.repeats > 0) && (repeat >= settings.repeats)) {
         return;
     }
 
-    if ((time + numSamples) >= int(noteDuration * settings.noteLength) && (lastNoteValue.first > 0)) {
+    if ((time + numSamples) >= int(noteDuration * settings.noteLength)
+        && (lastNoteValue.first > 0 || settings.order == ChordRepeat)) {
         auto offset = juce::jmax(0, juce::jmin(int(int(noteDuration * settings.noteLength) - time), numSamples - 1));
         switch (settings.order) {
         default:
@@ -204,7 +203,9 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         case Down:
         case UpDown:
         case DownUp:
-            
+        case UpAndDown:
+        case DownAndUp:
+        case Random:
             midiMessages.addEvent(juce::MidiMessage::noteOff(1, lastNoteValue.first), offset);
             lastNoteValue = std::make_pair(-1, juce::uint8(0));
             break;
@@ -229,6 +230,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         case DownUp:
         case UpAndDown:
         case DownAndUp:
+        case Random:
             switch (settings.order)
             {
             default:
@@ -398,7 +400,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterFloat>("Velocity Fine Control", "Velocity Fine Control", 0.01f, 1.f, 1.f));
 
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.01f, 2.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Note Length", "Note Length", 0.01f, 1.f, 0.5f));
 
     layout.add(std::make_unique<juce::AudioParameterInt>("Repeats", "Repeats", 0, 16, 0));
 
