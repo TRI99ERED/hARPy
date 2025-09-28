@@ -36,7 +36,7 @@ ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& a
 //==============================================================================
 /**
 */
-class HARPyAudioProcessor  : public juce::AudioProcessor
+class HARPyAudioProcessor  : public juce::AudioProcessor, juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -92,6 +92,7 @@ private:
     int repeat = 0;
 
     int getAbsoluteArpeggioLength();
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessor)
 };

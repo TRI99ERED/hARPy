@@ -22,10 +22,14 @@ HARPyAudioProcessor::HARPyAudioProcessor()
                        )
 #endif
 {
+    apvts.addParameterListener("Delta", this);
+    apvts.addParameterListener("Offsets", this);
 }
 
 HARPyAudioProcessor::~HARPyAudioProcessor()
 {
+    apvts.removeParameterListener("Delta", this);
+    apvts.removeParameterListener("Offsets", this);
 }
 
 //==============================================================================
@@ -177,12 +181,22 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     for (const auto metadata : midiMessages)
     {
         const auto msg = metadata.getMessage();
-        if (msg.isNoteOn())
+        if (msg.isNoteOn()) {
             noteVels.add(std::make_pair(msg.getNoteNumber(), msg.getVelocity()));
-        else if (msg.isNoteOff())
+            for (int i = 0; i < settings.offsets; ++i) {
+                noteVels.add(std::make_pair(msg.getNoteNumber() + settings.delta * (i + 1), msg.getVelocity()));
+            }
+        }
+        else if (msg.isNoteOff()) {
             for (juce::uint8 i = 0; i <= 127; ++i) {
                 noteVels.removeValue(std::make_pair(msg.getNoteNumber(), i));
             }
+            for (int i = 0; i < settings.offsets; ++i) {
+                for (juce::uint8 j = 0; j <= 127; ++j) {
+                    noteVels.removeValue(std::make_pair(msg.getNoteNumber() + settings.delta * (i + 1), j));
+                }
+            }
+        }
     }
     midiMessages.clear();
 
@@ -384,7 +398,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
         "1/64",
     };
 
-    layout.add(std::make_unique<juce::AudioParameterChoice>("Rate", "Rate", rateChoices, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("Rate", "Rate", rateChoices, 3));
 
     juce::StringArray orderChoices{
         "Up",
@@ -454,4 +468,10 @@ ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& a
     settings.offsets = apvts.getRawParameterValue("Offsets")->load();
 
     return settings;
+}
+
+void HARPyAudioProcessor::parameterChanged(const juce::String& parameterID, float newValue) {
+    if (parameterID == "Delta" || parameterID == "Offsets") {
+        noteVels.clear();
+    }
 }
