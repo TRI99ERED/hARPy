@@ -136,6 +136,7 @@ bool HARPyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 
 void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    // Update host BPM
     auto tmpBPM = getPlayHead()->getPosition()->getBpm();
 
     // NOTE: When you're running standalone, you won't get a value here, as there is no host environment
@@ -219,7 +220,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     if ((time + numSamples) >= noteDuration && noteVels.size() > 0) {
         auto offset = juce::jmax(0, juce::jmin(int(noteDuration - time), numSamples - 1));
 
-        auto absArpLen = absoluteArpeggioLength();
+        auto absArpLen = getAbsoluteArpeggioLength();
         juce::uint8 finalVel = 0;
 
         switch (settings.order) {
@@ -238,7 +239,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 currentNote = absArpPos;
                 break;
             case Down:
-                currentNote = absoluteArpeggioLength() - 1 - absArpPos;
+                currentNote = absArpLen - 1 - absArpPos;
                 break;
             case UpDown:
                 if (noteVels.size() <= 1) {
@@ -250,7 +251,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                     currentNote = absArpPos;
                 }
                 else {
-                    currentNote = absoluteArpeggioLength() - absArpPos;
+                    currentNote = absArpLen - absArpPos;
                 }
                 break;
             case DownUp:
@@ -276,7 +277,7 @@ void HARPyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                     currentNote = absArpPos;
                 }
                 else {
-                    currentNote = absoluteArpeggioLength() - 1 - absArpPos;
+                    currentNote = absArpLen - 1 - absArpPos;
                 }
                 break;
             case DownAndUp:
@@ -407,7 +408,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
     return layout;
 }
 
-int HARPyAudioProcessor::absoluteArpeggioLength()
+int HARPyAudioProcessor::getAbsoluteArpeggioLength()
 {
     auto settings = getArpeggiatorSettings(apvts);
     switch (ArpeggioOrder(settings.order))

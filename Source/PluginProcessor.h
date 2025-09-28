@@ -77,8 +77,6 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout() };
 
-    int absoluteArpeggioLength();
-
     int hostBPM = 120;
 
 private:
@@ -90,6 +88,8 @@ private:
     juce::SortedSet<std::pair<int, juce::uint8>> noteVels;
     int absArpPos = 0;
     int repeat = 0;
+
+    int getAbsoluteArpeggioLength();
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HARPyAudioProcessor)
 };
