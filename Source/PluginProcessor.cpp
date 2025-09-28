@@ -405,6 +405,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout HARPyAudioProcessor::createP
 
     layout.add(std::make_unique<juce::AudioParameterInt>("Repeats", "Repeats", 0, 16, 0));
 
+    layout.add(std::make_unique<juce::AudioParameterInt>("Delta", "Delta", -24, 24, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterInt>("Offsets", "Offsets", 0, 8, 0));
+
     return layout;
 }
 
@@ -446,6 +450,8 @@ ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& a
     settings.velFineCtrl = apvts.getRawParameterValue("Velocity Fine Control")->load();
     settings.noteLength = apvts.getRawParameterValue("Note Length")->load();
     settings.repeats = apvts.getRawParameterValue("Repeats")->load();
+    settings.delta = apvts.getRawParameterValue("Delta")->load();
+    settings.offsets = apvts.getRawParameterValue("Offsets")->load();
 
     return settings;
 }

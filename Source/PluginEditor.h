@@ -66,7 +66,9 @@ private:
         orderSlider,
         velFineCtrlSlider,
         noteLenSlider,
-        repeatsSlider;
+        repeatsSlider,
+        deltaSlider,
+        offsetsSlider;
 
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
@@ -75,7 +77,9 @@ private:
         orderSliderAttachment,
         velFineCtrlSliderAttachment,
         noteLenSliderAttachment,
-        repeatsSliderAttachment;
+        repeatsSliderAttachment,
+        deltaSliderAttachment,
+        offsetsSliderAttachment;
 
     std::vector<juce::Component*> getComps();
 

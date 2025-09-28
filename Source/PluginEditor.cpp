@@ -122,7 +122,9 @@ juce::String RotarySliderWithLabel::getDisplayString() const {
 
     if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(param)) {
         int value = getValue();
-        return juce::String((value == 0) ? juce::String("inf") : juce::String(value));
+        return (title == "Repeats")
+            ? juce::String((value == 0) ? juce::String("inf") : juce::String(value))
+            : juce::String(value);
     }
 }
 //==============================================================================
@@ -133,11 +135,15 @@ HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
     velFineCtrlSlider(*audioProcessor.apvts.getParameter("Velocity Fine Control"), "Velocity"),
     noteLenSlider(*audioProcessor.apvts.getParameter("Note Length"), "Note Length"),
     repeatsSlider(*audioProcessor.apvts.getParameter("Repeats"), "Repeats"),
+    deltaSlider(*audioProcessor.apvts.getParameter("Delta"), "Delta"),
+    offsetsSlider(*audioProcessor.apvts.getParameter("Offsets"), "Offsets"),
     rateSliderAttachment(audioProcessor.apvts, "Rate", rateSlider),
     orderSliderAttachment(audioProcessor.apvts, "Order", orderSlider),
     velFineCtrlSliderAttachment(audioProcessor.apvts, "Velocity Fine Control", velFineCtrlSlider),
     noteLenSliderAttachment(audioProcessor.apvts, "Note Length", noteLenSlider),
-    repeatsSliderAttachment(audioProcessor.apvts, "Repeats", repeatsSlider)
+    repeatsSliderAttachment(audioProcessor.apvts, "Repeats", repeatsSlider),
+    deltaSliderAttachment(audioProcessor.apvts, "Delta", deltaSlider),
+    offsetsSliderAttachment(audioProcessor.apvts, "Offsets", offsetsSlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -146,7 +152,7 @@ HARPyAudioProcessorEditor::HARPyAudioProcessorEditor (HARPyAudioProcessor& p)
         addAndMakeVisible(comp);
     }
 
-    setSize (400, 100);
+    setSize (600, 125);
 }
 
 HARPyAudioProcessorEditor::~HARPyAudioProcessorEditor()
@@ -185,21 +191,27 @@ void HARPyAudioProcessorEditor::resized()
 
     auto titleArea = bounds.removeFromBottom(bounds.getHeight() * 0.1f);
 
-    auto rateArea = bounds.removeFromLeft(bounds.getWidth() * 0.20f);
+    auto rateArea = bounds.removeFromLeft(bounds.getWidth() / 7.f);
     bounds.removeFromLeft(1);
-    auto orderArea = bounds.removeFromLeft(bounds.getWidth() * 0.25f);
+    auto orderArea = bounds.removeFromLeft(bounds.getWidth() / 6.f);
     bounds.removeFromLeft(1);
-    auto velFineCtrlArea = bounds.removeFromLeft(bounds.getWidth() * 0.33f);
+    auto velFineCtrlArea = bounds.removeFromLeft(bounds.getWidth() / 5.f);
     bounds.removeFromLeft(1);
-    auto noteLenArea = bounds.removeFromLeft(bounds.getWidth() * 0.5f);
+    auto noteLenArea = bounds.removeFromLeft(bounds.getWidth() / 4.f);
     bounds.removeFromLeft(1);
-    auto repeatsArea = bounds;
+    auto repeatsArea = bounds.removeFromLeft(bounds.getWidth() / 3.f);
+    bounds.removeFromLeft(1);
+    auto deltaArea = bounds.removeFromLeft(bounds.getWidth() / 2.f);
+    bounds.removeFromLeft(1);
+    auto offsetsArea = bounds;
 
     rateSlider.setBounds(rateArea);
     orderSlider.setBounds(orderArea);
     velFineCtrlSlider.setBounds(velFineCtrlArea);
     noteLenSlider.setBounds(noteLenArea);
     repeatsSlider.setBounds(repeatsArea);
+    deltaSlider.setBounds(deltaArea);
+    offsetsSlider.setBounds(offsetsArea);
 }
 
 std::vector<juce::Component*> HARPyAudioProcessorEditor::getComps()
@@ -210,5 +222,7 @@ std::vector<juce::Component*> HARPyAudioProcessorEditor::getComps()
         &velFineCtrlSlider,
         &noteLenSlider,
         &repeatsSlider,
+        &deltaSlider,
+        &offsetsSlider,
     };
 }

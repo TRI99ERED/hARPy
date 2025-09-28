@@ -27,6 +27,8 @@ struct ArpeggiatorSettings {
     float velFineCtrl{ 1.f };
     float noteLength{ 1.f };
     int repeats{ 0 };
+    int delta{ 0 };
+    int offsets{ 0 };
 };
 
 ArpeggiatorSettings getArpeggiatorSettings(juce::AudioProcessorValueTreeState& apvts);
